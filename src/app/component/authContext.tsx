@@ -1,3 +1,4 @@
+"use client"
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../../../Firebase/initFirebase'; // Adjust path to your Firebase config
@@ -17,6 +18,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+    }, (error) => {
+      console.error("Auth state change error:", error);
+      setLoading(false); // Ensure loading is false even if there is an error
     });
 
     return () => unsubscribe();
