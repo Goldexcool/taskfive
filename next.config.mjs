@@ -3,10 +3,11 @@
 const nextConfig = {
     images: {
         domains: [
-            'example.com',   // Add your own domains here
+            'example.com', 
             'cdn.example.com',
             'images.example.com',
-            'placeholder.com', // Add any other domains you use
+            'placeholder.com', 
+            'firebasestorage.googleapis.com'
             // You can add more domains as needed
         ],
     },

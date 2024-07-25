@@ -1,47 +1,50 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { addUser, uploadImage, updateUser } from "../../../Firebase/firebaseUtils"; // Adjust path as needed
+import { addUser, uploadImage, updateUser, getUser } from "../../../Firebase/firebaseUtils"; // Adjust path as needed
 import customize from "../images/preview-section (1).svg";
 import profilee from "../images/ph_image (1).svg";
 import profileee from "../images/ph_image (3).svg";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import Header from "../component/header";
 import { collection, doc, setDoc } from "firebase/firestore"; // import firestore
-import { db } from "../../../Firebase/initFirebase"; // import firestore
+import { db, storage } from "../../../Firebase/initFirebase"; // import firestore
 
 const Profile: React.FC = () => {
     const [firstName, setFirstName] = useState<string>("");
     const [lastName, setLastName] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [image, setImage] = useState<File | null>(null);
-    const [imageURL, setImageURL] = useState<string | null>(profilee); // Initialize with default image
+    const [imageURL, setImageURL] = useState<any | null>(profilee); // Initialize with default image
     const [error, setError] = useState<string>("");
     const [uploading, setUploading] = useState<boolean>(false);
+    const [userData, setUserData] = useState<any>(null);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const selectedImage = e.target.files[0];
-            if (
-                selectedImage.size <= 1024 * 1024 &&
-                (selectedImage.type === "image/png" || selectedImage.type === "image/jpeg")
-            ) {
-                setImage(selectedImage);
-                setError("");
-                const reader = new FileReader();
-                reader.onloadend = () => setImageURL(reader.result as string);
-                reader.readAsDataURL(selectedImage);
-            } else {
-                setError("Image must be below 1024x1024px and in PNG or JPG format.");
-            }
+          const selectedImage = e.target.files[0];
+          if (
+            selectedImage.size <= 1024 * 1024 &&
+            (selectedImage.type === "image/png" || selectedImage.type === "image/jpeg")
+          ) {
+            setImage(selectedImage);
+            setError("");
+            const reader = new FileReader();
+            reader.onloadend = () => setImageURL(reader.result as string);
+            reader.readAsDataURL(selectedImage);
+          } else {
+            setError("Image must be below 1024x1024px and in PNG or JPG format.");
+          }
         }
-    };
+      };
+
+    
 
     const sendData = async () => {
         if (!firstName || !lastName) {
             setError("First name and Last name are required.");
             return;
         }
-
         try {
             setUploading(true);
             // Add user and get userId
@@ -55,32 +58,35 @@ const Profile: React.FC = () => {
                 firstName,
                 lastName,
                 email,
-                ...(imageURL && { imageURL }), // Conditionally add imageURL if it exists
             });
-
-            console.log("User created with ID:", userId); // For debugging
+            const storageRef = ref(storage, `user-images/${userId}`);
 
             if (image) {
-                const uploadedImageURL = await uploadImage(image, userId);
-                await updateUser(userId, { imageURL: uploadedImageURL });
-                setImageURL(uploadedImageURL);
+              await uploadBytes(storageRef, image);
+              const uploadedImageURL = await getDownloadURL(storageRef);
+              setImageURL(uploadedImageURL);
             }
+        
 
-            // Clear form and display success message
+            // Clear form
             setFirstName("");
             setLastName("");
             setEmail("");
             setImage(null);
             setImageURL(profilee); // Reset to default image
             setError("");
-            console.log("Profile saved successfully!");
+
+            // Fetch user data
+            const user = await getUser(userId);
+            setUserData(user);
+
         } catch (error) {
             console.error("Error saving profile:", error);
             setError("Error saving profile. Please try again.");
         } finally {
             setUploading(false);
         }
-    }
+    };
 
     return (
         <main>
@@ -89,7 +95,22 @@ const Profile: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-3">
                     <div className="bg-white p-[4rem] rounded-md flex justify-center items-center">
                         <div className="relative">
-                            <Image src={customize} alt="Customize preview" width={307} height={300} />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" viewBox="0 0 308 632" fill="none">
+                                <path d="M1 54.5C1 24.9528 24.9528 1 54.5 1H253.5C283.047 1 307 24.9528 307 54.5V577.5C307 607.047 283.047 631 253.5 631H54.5C24.9528 631 1 607.047 1 577.5V54.5Z" stroke="#737373" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="absolute top-[1%] left-[3%]" width="286" height="612" viewBox="0 0 286 612" fill="none">
+                                <path d="M1 45.5C1 20.9233 20.9233 1 45.5 1H69.5C75.8513 1 81 6.14873 81 12.5C81 20.5081 87.4919 27 95.5 27H190.5C198.508 27 205 20.5081 205 12.5C205 6.14873 210.149 1 216.5 1H240.5C265.077 1 285 20.9233 285 45.5V566.5C285 591.077 265.077 611 240.5 611H45.5C20.9233 611 1 591.077 1 566.5V45.5Z" fill="white" stroke="#737373" />
+                            </svg>
+                            {/* <Image src={customize} alt="Customize preview" width={307} height={300} /> */}
+                            {userData && (
+                                <div className="absolute top-12 text-center flex flex-col mx-auto w-full items-center justify-center gap-[]">
+                                    <Image src={imageURL} alt="Profile" width={100} height={100} className="rounded-full " />
+                                    <h1 className="text-[18px] font-[600] text-gray-600">{`${userData.firstName} ${userData.lastName}`}</h1>
+                                    {userData.email && (
+                                        <h2 className="text-[14px] font-[400] text-gray-200">{userData.email}</h2>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="bg-white p-[40px] rounded-md flex flex-col justify-between">
@@ -160,7 +181,7 @@ const Profile: React.FC = () => {
                                 onClick={sendData}
                                 disabled={uploading}
                             >
-                                {uploading ? 'Uploading...' : 'Save'}
+                                Save
                             </button>
                         </div>
                     </div>

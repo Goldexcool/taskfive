@@ -6,7 +6,7 @@ import { getPerformance } from "firebase/performance";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
- 
+
 const firebaseConfig = {
   apiKey: "AIzaSyBSP_SNiZr3K7Dh8kgSivw1t9SuBaDnPDQ",
   authDomain: "link-sharing-app-58f3f.firebaseapp.com",
