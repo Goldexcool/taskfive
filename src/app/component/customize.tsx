@@ -1,7 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-// import customize from '../images/preview-section (1).svg';
 import start from '../images/Group 273.svg';
 import github from '../images/github.svg';
 import frontedmentor from '../images/frontendmentor.svg';
@@ -29,7 +28,7 @@ import facebookImg from '../images/facebook (2).svg';
 import twitchImg from '../images/twitch.svg';
 import devtoImg from '../images/devto.svg';
 import codewarsImg from '../images/codewars.svg';
-import codepenImg from '../images/codepen.svg';
+import codepenImg from '../images/codewars.svg';
 import freecodecampImg from '../images/freecodecamp.svg';
 import gitlabImg from '../images/gitlab.svg';
 import hashnodeImg from '../images/hashnode.svg';
@@ -40,7 +39,9 @@ import profilee from "../images/ph_image (1).svg";
 import profileee from "../images/ph_image (3).svg";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import Header from "../component/header";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore"; // import firestore
+// import { db } from '../firebase'; // Adjust the path as necessary
+// import { doc, setDoc, getDocs, collection, DocumentData } from "firebase/firestore";
+import { collection, writeBatch, doc, getDoc, getDocs, setDoc, DocumentData } from "firebase/firestore"; // import firestore
 import { db, storage } from "../../../Firebase/initFirebase"; // import firestore
 
 interface Link {
@@ -48,6 +49,7 @@ interface Link {
     platform: string;
     url: string;
     error?: string;
+    image?: any;
 }
 
 interface Platform {
@@ -55,6 +57,7 @@ interface Platform {
     platName: string;
     image: any;
     placeholder?: string;
+    image01?: any | null;
 }
 
 interface PlatformImage {
@@ -74,7 +77,6 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [selectedPlatform, setSelectedPlatform] = useState<string>('Github');
     const [linkUrl, setLinkUrl] = useState<string>('');
-    // const [error, setError] = useState<string>('');
     const [platformImages, setPlatformImages] = useState<PlatformImage[]>([]);
     const [selectedImages, setSelectedImages] = useState({});
     const [firstName, setFirstName] = useState<string>("");
@@ -85,152 +87,62 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
     const [error, setError] = useState<string>("");
     const [uploading, setUploading] = useState<boolean>(false);
     const [userData, setUserData] = useState<any>(null);
+    const [selectedPlatformImage, setSelectedPlatformImage] = useState('');
+    const [success, setSuccess] = useState<string>('');
+
 
     const modalCont: Platform[] = [
-        { id: 1, platName: "Github", image: github, placeholder: "e.g. https://www.github.com/johnappleseed", },
-        { id: 2, platName: "Frontendmentor", image: frontedmentor, placeholder: "e.g. https://www.frontendmentor.io/profile/johnappleseed" },
-        { id: 3, platName: "Twitter", image: twitter, placeholder: "e.g. https://twitter.com/johnappleseed" },
-        { id: 4, platName: "LinkedIn", image: linkedIn, placeholder: "e.g. https://www.linkedin.com/in/johnappleseed" },
-        { id: 5, platName: "Youtube", image: youtube, placeholder: "e.g. https://www.youtube.com/c/johnappleseed" },
-        { id: 6, platName: "Facebook", image: facebook, placeholder: "e.g. https://www.facebook.com/johnappleseed" },
-        { id: 7, platName: "Twitch", image: twitch, placeholder: "e.g. https://www.twitch.tv/johnappleseed" },
-        { id: 8, platName: "Dev.to", image: devto, placeholder: "e.g. https://www.github.com/johnappleseed" },
-        { id: 9, platName: "CodeWars", image: codewars, placeholder: "e.g. https://www.codewars.com/johnappleseed" },
-        { id: 10, platName: "CodePen", image: codepen, placeholder: "e.g. https://www.codepen.com/johnappleseed" },
-        { id: 11, platName: "FreeCodeCamp", image: freecodecamp, placeholder: "e.g. https://www.freecodecamp.com/johnappleseed" },
-        { id: 12, platName: "GitLab", image: gitlab, placeholder: "e.g. https://www.gitlab.com/johnappleseed" },
-        { id: 13, platName: "Hashnode", image: hashnode, placeholder: "e.g. https://www.hashnode.com/johnappleseed" },
-        { id: 14, platName: "StackOverflow", image: stackoverflow, placeholder: "e.g. https://www.stackoverflow.com/johnappleseed" }
+        { id: 1, platName: "Github", image: github, image01: githubImg, placeholder: "e.g. https://www.github.com/johnappleseed", },
+        { id: 2, platName: "Frontendmentor", image: frontedmentor, image01: frontendmentorImg, placeholder: "e.g. https://www.frontendmentor.io/profile/johnappleseed" },
+        { id: 3, platName: "Twitter", image: twitter, image01: twitterImg, placeholder: "e.g. https://twitter.com/johnappleseed" },
+        { id: 4, platName: "LinkedIn", image: linkedIn, image01: linkedinImg, placeholder: "e.g. https://www.linkedin.com/in/johnappleseed" },
+        { id: 5, platName: "Youtube", image: youtube, image01: youtubeImg, placeholder: "e.g. https://www.youtube.com/c/johnappleseed" },
+        { id: 6, platName: "Facebook", image: facebook, image01: facebookImg, placeholder: "e.g. https://www.facebook.com/johnappleseed" },
+        { id: 7, platName: "Twitch", image: twitch, image01: twitchImg, placeholder: "e.g. https://www.twitch.tv/johnappleseed" },
+        { id: 8, platName: "Dev.to", image: devto, image01: devtoImg, placeholder: "e.g. https://www.github.com/johnappleseed" },
+        { id: 9, platName: "CodeWars", image: codewars, image01: codewarsImg, placeholder: "e.g. https://www.codewars.com/johnappleseed" },
+        { id: 10, platName: "CodePen", image: codepen, image01: codepenImg, placeholder: "e.g. https://www.codepen.com/johnappleseed" },
+        { id: 11, platName: "FreeCodeCamp", image: freecodecamp, image01: freecodecampImg, placeholder: "e.g. https://www.freecodecamp.com/johnappleseed" },
+        { id: 12, platName: "GitLab", image: gitlab, image01: gitlabImg, placeholder: "e.g. https://www.gitlab.com/johnappleseed" },
+        { id: 13, platName: "Hashnode", image: hashnode, image01: hashnode, placeholder: "e.g. https://www.hashnode.com/johnappleseed" },
+        { id: 14, platName: "StackOverflow", image: stackoverflow, image01: stackoverflowImg, placeholder: "e.g. https://www.stackoverflow.com/johnappleseed" }
     ];
 
-    const websites = [
-        {
-            name: "GitHub",
-            link: "https://www.github.com/",
-            backgroundColor: "#000000",
-            image: github,
-            textColor: "#FFF",
-            previewImage: githubImg,
-        },
-        {
-            name: "Frontend Mentor",
-            link: "https://www.frontendmentor.io/",
-            backgroundColor: "#fff",
-            image: frontedmentor,
-            textColor: "#000",
-            previewImage: frontendmentorImg,
-        },
-        {
-            name: "Twitter",
-            link: "https://www.twitter.com/",
-            backgroundColor: "#1DA1F2",
-            image: twitter,
-            textColor: "#FFF",
-            previewImage: twitterImg,
-        },
-        {
-            name: "LinkedIn",
-            link: "https://www.linkedin.com/",
-            backgroundColor: "#0077B5",
-            image: linkedIn,
-            textColor: "#FFF",
-            previewImage: linkedinImg,
-        },
-        {
-            name: "YouTube",
-            link: "https://www.youtube.com/",
-            backgroundColor: "#FF0000",
-            image: youtube,
-            textColor: "#FFF",
-            previewImage: youtubeImg,
-        },
-        {
-            name: "Facebook",
-            link: "https://www.facebook.com/",
-            backgroundColor: "#1877F2",
-            image: facebook,
-            textColor: "#FFF",
-            previewImage: facebookImg,
-        },
-        {
-            name: "Twitch",
-            link: "https://www.twitch.tv/",
-            backgroundColor: "#EE3FC8",
-            image: twitch,
-            textColor: "#FFF",
-            previewImage: twitchImg,
-        },
-        {
-            name: "Dev.to",
-            link: "https://www.dev.to/",
-            backgroundColor: "#000000",
-            image: devto,
-            textColor: "#FFF",
-            previewImage: devtoImg,
-        },
-        {
-            name: "Codewars",
-            link: "https://www.codewars.com/",
-            backgroundColor: "#B1361E",
-            image: codewars,
-            textColor: "#FFF",
-            previewImage: codewarsImg,
-        },
-        {
-            name: "freeCodeCamp",
-            link: "https://www.freecodecamp.org/",
-            backgroundColor: "#0A0A23",
-            image: freecodecamp,
-            textColor: "#FFF",
-            previewImage: freecodecampImg,
-        },
-        {
-            name: "GitLab",
-            link: "https://www.gitlab.com/",
-            backgroundColor: "#FC6D26",
-            image: gitlab,
-            textColor: "#FFF",
-            previewImage: gitlabImg,
-        },
-        {
-            name: "Hashnode",
-            link: "https://www.hashnode.com/",
-            backgroundColor: "#2962FF",
-            image: hashnode,
-            textColor: "#FFF",
-            previewImage: hashnodeImg,
-        },
-        {
-            name: "Stack Overflow",
-            link: "https://www.stackoverflow.com/",
-            backgroundColor: "#F48024",
-            image: stackoverflow,
-            textColor: "#FFF",
-            previewImage: stackoverflowImg,
-        },
-    ];
+
 
     const handleAddNewLink = (): void => {
         setShowInitialPrompt(false);
-        setLinks([...links, { id: links.length + 1, platform: selectedPlatform, url: '' }]);
+        setLinks([
+            ...links,
+            {
+                id: links.length + 1,
+                platform: 'Github',
+                url: '',
+                image: '', // Set image to null initially
+            }
+        ]);
     };
 
     const handleRemoveLink = (id: number): void => {
         setLinks(links.filter(link => link.id !== id));
-        if (links.length === 1) setShowInitialPrompt(true); // Check if last link is being removed
+        if (links.length === 1) setShowInitialPrompt(true);
     };
 
-    const handlePlatformChange = (linkId: any, platformName: any) => {
-        const selectedPlatform = websites.find(item => item.name === platformName);
-        setSelectedPlatform(selectedPlatform ? selectedPlatform.previewImage : null);
-        setLinks(links.map(link => link.id === linkId ? { ...link, platform: platformName } : link));
+    const handlePlatformChange = (linkId: number, platformName: string) => {
+        const selectedPlatform = modalCont.find(item => item.platName === platformName);
+        const platformImage = selectedPlatform ? selectedPlatform.image01 : null;
+
+        setLinks(links.map(link =>
+            link.id === linkId ? { ...link, platform: platformName, image: platformImage } : link
+        ));
         setOpenModalId(null);
     };
 
 
+
     const handleImageClick = (url: string): void => {
         if (url) {
-            window.open(url, '_blank'); // Open the link in a new tab
+            window.open(url, '_blank');
         }
     };
     const handleUrlChange = (id: any, url: any) => {
@@ -241,14 +153,26 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
         const platformUrls: { [key: string]: string } = {
             'Github': 'github.com/',
             'GitLab': 'gitlab.com/',
-            'Frontendmentor': 'frontendmentor.io/',
-            // add other platforms here
+            'Frontendmentor': 'www.frontendmentor.io/',
+            'Twitter': 'x.com/',
+            'LinkedIn': 'linkedin.com/',
+            'Youtube': 'www.youtube.com/',
+            'Facebook': 'facebook.com/',
+            'Twitch': 'twitch.tv/',
+            'Dev.to': 'dev.to/',
+            'CodeWars': 'codewars.com/',
+            'CodePen': 'codepen.io/',
+            'FreeCodeCamp': 'freecodecamp.org/',
+            'Hashnode': 'hashnode.com/',
+            'StackOverflow': 'stackoverflow.com/'
+
         };
         const expectedUrl = platformUrls[platform] || '';
         if (!url) {
             return "Link can't be empty";
         } else if (expectedUrl && !url.startsWith(`https://${expectedUrl}`)) {
-            return `URL should start with https://${expectedUrl}`;
+            // return `URL should start with https://${expectedUrl}`;
+            return "Please check the URL"
         } else {
             return '';
         }
@@ -259,18 +183,84 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
         setOpenModalId(openModalId === id ? null : id);
     };
 
-    const handleSave = (): void => {
+    const handleSave1 = async (): Promise<void> => {
         let hasError = false;
+    
+        // Validate links
         const updatedLinks = links.map(link => {
             const error = validateLink(link.platform, link.url);
             if (error) hasError = true;
             return { ...link, error };
         });
         setLinks(updatedLinks);
+    
+        // Proceed to save if there are no errors
         if (!hasError) {
-            console.log('Save successful', links);
+            try {
+                const userId = localStorage.getItem("userId");
+                if (!userId) {
+                    throw new Error("User ID is not available.");
+                }
+    
+                console.log("Saving links for userId:", userId); // Debugging log
+    
+                // Save each link to the database
+                for (const link of updatedLinks) {
+                    console.log("Saving link:", link); // Debugging log
+                    const linkDocRef = doc(db, `users/${userId}/links`, link.id.toString());
+                    await setDoc(linkDocRef, link);
+                }
+    
+                setSuccess("Links saved successfully.");
+                setError("");
+                console.log("Save successful", updatedLinks);
+    
+                // Clear link inputs
+                setLinks(updatedLinks.map(link => ({ ...link, url: '' })));
+            } catch (error) {
+                console.error("Error saving links:", error);
+                setError("Error saving links. Please try again.");
+                setSuccess("");
+            }
+        } else {
+            setError("There are validation errors. Please fix them before saving.");
+            setSuccess("");
         }
     };
+    
+
+
+    useEffect(() => {
+        const fetchLinks = async () => {
+            try {
+                const userId = localStorage.getItem("userId");
+                if (!userId) {
+                    throw new Error("User ID is not available.");
+                }
+
+                const linksCollectionRef = collection(db, `users/${userId}/links`);
+                const linkDocs = await getDocs(linksCollectionRef);
+
+                const fetchedLinks: Link[] = [];
+                linkDocs.forEach(doc => {
+                    const data = doc.data() as DocumentData;
+                    fetchedLinks.push({
+                        id: data.id,
+                        url: data.url,
+                        platform: data.platform,
+                        image: data.image,
+                    });
+                });
+
+                setLinks(fetchedLinks);
+            } catch (error) {
+                console.error("Error fetching links:", error);
+            }
+        };
+
+        fetchLinks();
+    }, []);
+
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -366,13 +356,16 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
         }
     };
 
+    const openLink = (url: any) => {
+        window.open(url, '_blank');
+    };
 
     return (
         <section className='pt-0 pr-6 pb-6 pl-6'>
             <div className='grid md:grid-cols-2 gap-3'>
                 <div className='p-[15px] '>
                     {activeSection === "link" ? (
-                        <div className='bg-white p-[4rem] rounded-md flex justify-between min-h-[700px] items-center '>
+                        <div className='bg-white p-[4rem] rounded-md flex  justify-center min-h-[700px] items-center '>
                             <div className='relative'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" viewBox="0 0 308 632" fill="none">
                                     <path d="M1 54.5C1 24.9528 24.9528 1 54.5 1H253.5C283.047 1 307 24.9528 307 54.5V577.5C307 607.047 283.047 631 253.5 631H54.5C24.9528 631 1 607.047 1 577.5V54.5Z" stroke="#737373" />
@@ -380,15 +373,11 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="absolute top-[1%] left-[3%]" width="286" height="612" viewBox="0 0 286 612" fill="none">
                                     <path d="M1 45.5C1 20.9233 20.9233 1 45.5 1H69.5C75.8513 1 81 6.14873 81 12.5C81 20.5081 87.4919 27 95.5 27H190.5C198.508 27 205 20.5081 205 12.5C205 6.14873 210.149 1 216.5 1H240.5C265.077 1 285 20.9233 285 45.5V566.5C285 591.077 265.077 611 240.5 611H45.5C20.9233 611 1 591.077 1 566.5V45.5Z" fill="white" stroke="#737373" />
                                 </svg>
-                                <div className='absolute top-0 left-0 p-4 flex flex-col gap-2'>
-                                    {platformImages.map(img => (
-                                        <div
-                                            key={img.id}
-                                            className='mb-2 cursor-pointer'
-                                            onClick={() => handleImageClick(img.url)}
-                                        >
-                                            <Image src={img.image} alt={img.platName} width={237} height={44} />
-                                        </div>
+                                <div className='absolute top-[40%] cursor-pointer left-0 p-4 flex flex-col mx-auto w-full  gap-2 items-center justify-center'>
+                                    {links.map((link, index) => (
+                                        link.image && (
+                                            <Image key={index} src={link.image} alt={link.platform} width={237} height={44} />
+                                        )
                                     ))}
                                 </div>
                             </div>
@@ -403,7 +392,6 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="absolute top-[1%] left-[3%]" width="286" height="612" viewBox="0 0 286 612" fill="none">
                                         <path d="M1 45.5C1 20.9233 20.9233 1 45.5 1H69.5C75.8513 1 81 6.14873 81 12.5C81 20.5081 87.4919 27 95.5 27H190.5C198.508 27 205 20.5081 205 12.5C205 6.14873 210.149 1 216.5 1H240.5C265.077 1 285 20.9233 285 45.5V566.5C285 591.077 265.077 611 240.5 611H45.5C20.9233 611 1 591.077 1 566.5V45.5Z" fill="white" stroke="#737373" />
                                     </svg>
-                                    {/* <Image src={customize} alt="Customize preview" width={307} height={300} /> */}
                                     {userData && (
                                         <div className="absolute top-12 text-center flex flex-col mx-auto w-full items-center justify-center gap-[]">
                                             <Image src={imageURL} alt="Profile" width={100} height={100} className="rounded-full " />
@@ -413,11 +401,21 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                             )}
                                         </div>
                                     )}
+                                    <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar'>
+                                        <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full  gap-2 items-center justify-center'>
+                                            {links.map((link, index) => (
+                                                link.image && (
+                                                    <Image key={index} src={link.image} alt={link.platform} width={237} height={44} />
+                                                )
+                                            ))}
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         )}
                 </div>
-                <div className='p-[15px] bg-white--'>
+                <div className='p-[15px] bg-white-- md:w-full'>
                     {activeSection === "profile" ? (
                         <div className="bg-white p-[40px] rounded-md flex flex-col min-h-full justify-between w-full">
                             <h1 className="text-header-M font-[700] text-gray-600">Profile Details</h1>
@@ -556,16 +554,29 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                                                 </div>
                                                             )}
                                                             <label className='text-body-S font-[400] text-gray-200'>Link</label>
-                                                            <div className='relative'>
+                                                            <div className='relative' key={link.id}>
                                                                 <input
                                                                     type='text'
                                                                     value={link.url}
-                                                                    onChange={(e) => handleUrlChange(link.id, e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        const newUrl = e.target.value;
+                                                                        const updatedLinks = links.map(l => {
+                                                                            if (l.id === link.id) {
+                                                                                const error = validateLink(l.platform, newUrl);
+                                                                                return { ...l, url: newUrl, error: '' };
+                                                                            }
+                                                                            return l;
+                                                                        });
+                                                                        setLinks(updatedLinks);
+                                                                    }}
                                                                     className='focus:shadow-faint-blue focus:outline-none p-[2rem] rounded-md w-full border-[1.5px] px-[36px] py-[11px]'
-                                                                    placeholder={placeholder}
+                                                                    placeholder={link.error ? "Please check the URL" : `${placeholder}`}
                                                                 />
-                                                                <Image src={linkIcon} alt='LinkIcon' className='absolute top-1/2 left-3 transform -translate-y-1/2 pointer-events-none' width={16} height={16} />
-                                                                {link.error && <p className='absolute top-1/2 transform -translate-y-1/2 right-4 text-body-S font-[400] text-red'>{link.error}</p>}
+                                                                <Image src={linkIcon} alt='LinkIcon' className='absolute top-[35%] left-3 transform pointer-events-none' width={16} height={16} />
+                                                                {/* <Image src={link.image} alt='LinkIcon' className='absolute top-1/2 left-3 transform -translate-y-1/2 pointer-events-none' width={16} height={16} /> */}
+                                                                {link.error && <p className='absolute top-[50%] transform -translate-y-1/2 right-4 text-body-S font-[400] text-red'>{link.error}</p>}
+                                                                {/* {error && <p className="text-red">{error}</p>} */}
+                                                                {/* {success && <p className="text-green-500">{success}</p>} */}
                                                             </div>
                                                         </form>
                                                     </div>
@@ -578,7 +589,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
 
                                 </div>
                                 <div className='flex justify-end items-end w-full mt-4'>
-                                    <button className='px-[27px] py-[10px] text-header-S-M rounded-[8px] bg-[#633CFF] text-white hover:bg-purple-400' onClick={handleSave}>Save</button>
+                                    <button className='px-[27px] py-[10px] text-header-S-M rounded-[8px] bg-[#633CFF] text-white hover:bg-purple-400' onClick={handleSave1}>Save</button>
                                 </div>
                             </div>
 
