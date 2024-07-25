@@ -3,8 +3,10 @@ import logo from '../images/logo (5).svg'
 import Image from 'next/image';
 import link from '../images/ph_link-bold.svg'
 import profile from '../images/ph_user-circle-bold.svg'
+import {useRouter} from 'next/navigation'
 
 const Header = ({ activeSection, setActiveSection }: any) => {
+    const router = useRouter()
     return (
         <header className="flex bg-gray-100 p-4 border-b border-gray-300 justify-between items-center">
             <div className='p-2 bg-white-- flex justify-between items-center w-full rounded-md'>
@@ -34,7 +36,7 @@ const Header = ({ activeSection, setActiveSection }: any) => {
 
                 </div>
 
-                <button className='px-[27px] py-[11px] rounded-[8px] text-blue text-header-S-M font-600 border-[1.3px] border-blue '>Preview</button>
+                <button className='px-[27px] py-[11px] rounded-[8px] text-blue text-header-S-M font-600 border-[1.3px] border-blue ' onClick={() => router.push('preview')}>Preview</button>
             </div>
 
 

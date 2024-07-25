@@ -41,11 +41,12 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import Header from "../component/header";
 // import { db } from '../firebase'; // Adjust the path as necessary
 // import { doc, setDoc, getDocs, collection, DocumentData } from "firebase/firestore";
-import { collection, writeBatch, doc, getDoc, getDocs, setDoc, DocumentData } from "firebase/firestore"; // import firestore
+import { collection, writeBatch, doc, getDoc, getDocs, setDoc, DocumentData, WriteBatch } from "firebase/firestore"; // import firestore
 import { db, storage } from "../../../Firebase/initFirebase"; // import firestore
+import { link } from 'fs';
 
 interface Link {
-    id: number;
+    id: any;
     platform: string;
     url: string;
     error?: string;
@@ -130,13 +131,14 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
 
     const handlePlatformChange = (linkId: number, platformName: string) => {
         const selectedPlatform = modalCont.find(item => item.platName === platformName);
-        const platformImage = selectedPlatform ? selectedPlatform.image01 : null;
-
+        const platformImage = selectedPlatform ? selectedPlatform.image01 : '';
+    
         setLinks(links.map(link =>
             link.id === linkId ? { ...link, platform: platformName, image: platformImage } : link
         ));
         setOpenModalId(null);
     };
+    
 
 
 
@@ -202,21 +204,28 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                     throw new Error("User ID is not available.");
                 }
     
-                console.log("Saving links for userId:", userId); // Debugging log
+                console.log("Saving links for userId:", userId);
     
                 // Save each link to the database
+                const batch = writeBatch(db); // Use a batch for performance
                 for (const link of updatedLinks) {
-                    console.log("Saving link:", link); // Debugging log
                     const linkDocRef = doc(db, `users/${userId}/links`, link.id.toString());
-                    await setDoc(linkDocRef, link);
+                    batch.set(linkDocRef, {
+                        url: link.url,
+                        platform: link.platform,
+                        image: link.image // Ensure the image is included
+                    });
                 }
+    
+                await commitBatch(batch);
     
                 setSuccess("Links saved successfully.");
                 setError("");
                 console.log("Save successful", updatedLinks);
     
-                // Clear link inputs
+                // Clear link inputs after successful save
                 setLinks(updatedLinks.map(link => ({ ...link, url: '' })));
+    
             } catch (error) {
                 console.error("Error saving links:", error);
                 setError("Error saving links. Please try again.");
@@ -229,86 +238,12 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
     };
     
 
-
-    useEffect(() => {
-        const fetchLinks = async () => {
-            try {
-                const userId = localStorage.getItem("userId");
-                if (!userId) {
-                    throw new Error("User ID is not available.");
-                }
-
-                const linksCollectionRef = collection(db, `users/${userId}/links`);
-                const linkDocs = await getDocs(linksCollectionRef);
-
-                const fetchedLinks: Link[] = [];
-                linkDocs.forEach(doc => {
-                    const data = doc.data() as DocumentData;
-                    fetchedLinks.push({
-                        id: data.id,
-                        url: data.url,
-                        platform: data.platform,
-                        image: data.image,
-                    });
-                });
-
-                setLinks(fetchedLinks);
-            } catch (error) {
-                console.error("Error fetching links:", error);
-            }
-        };
-
-        fetchLinks();
-    }, []);
-
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const selectedImage = e.target.files[0];
-            if (
-                selectedImage.size <= 1024 * 1024 &&
-                (selectedImage.type === "image/png" || selectedImage.type === "image/jpeg")
-            ) {
-                setImage(selectedImage);
-                setError("");
-                const reader = new FileReader();
-                reader.onloadend = () => setImageURL(reader.result as string);
-                reader.readAsDataURL(selectedImage);
-            } else {
-                setError("Image must be below 1024x1024px and in PNG or JPG format.");
-            }
-        }
-    };
-
-    const uploadImage = async (image: any, userId: any) => {
-        const storageRef = ref(storage, `user-images/${userId}`);
-        await uploadBytes(storageRef, image);
-        const uploadedImageURL = await getDownloadURL(storageRef);
-        return uploadedImageURL;
-    };
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const userId = localStorage.getItem("userId");
-            if (userId) {
-                const userDocRef = doc(db, "users", userId);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    const user = userDoc.data();
-                    setUserData(user);
-                    setImageURL(user.imageURL);
-                }
-            }
-        };
-
-        fetchUserData();
-    }, []);
-
     const sendData = async () => {
-        if (!firstName || !lastName) {
-            setError("First name and Last name are required.");
+        if (!firstName || !lastName || !email) {
+            setError("First name, last name, and email are required.");
             return;
         }
+
         try {
             setUploading(true);
 
@@ -348,6 +283,10 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
             setImage(null);
             setImageURL(profilee);
             setError("");
+            setSuccess("Profile saved successfully.");
+
+            // Save links after saving the profile
+            handleSave1();
         } catch (error) {
             console.error("Error saving profile:", error);
             setError("Error saving profile. Please try again.");
@@ -355,6 +294,85 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
             setUploading(false);
         }
     };
+
+
+    useEffect(() => {
+        const fetchLinks = async () => {
+            try {
+                const userId = localStorage.getItem("userId");
+                if (!userId) {
+                    throw new Error("User ID is not available.");
+                }
+    
+                const linksCollectionRef = collection(db, `users/${userId}/links`);
+                const linkDocs = await getDocs(linksCollectionRef);
+    
+                const fetchedLinks: Link[] = [];
+                linkDocs.forEach(doc => {
+                    const data = doc.data() as DocumentData;
+                    fetchedLinks.push({
+                        id: doc.id, // Ensure you use doc.id for the link ID
+                        url: data.url,
+                        platform: data.platform,
+                        image: data.image // Ensure you include the image URL
+                    });
+                });
+    
+                setLinks(fetchedLinks);
+            } catch (error) {
+                console.error("Error fetching links:", error);
+            }
+        };
+    
+        fetchLinks();
+    }, []);
+    
+
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const selectedImage = e.target.files[0];
+            if (
+                selectedImage.size <= 1024 * 1024 &&
+                (selectedImage.type === "image/png" || selectedImage.type === "image/jpeg")
+            ) {
+                setImage(selectedImage);
+                setError("");
+                const reader = new FileReader();
+                reader.onloadend = () => setImageURL(reader.result as string);
+                reader.readAsDataURL(selectedImage);
+            } else {
+                setError("Image must be below 1024x1024px and in PNG or JPG format.");
+            }
+        }
+    };
+
+    const uploadImage = async (image: any, userId: any) => {
+        const storageRef = ref(storage, `user-images/${userId}`);
+        await uploadBytes(storageRef, image);
+        const uploadedImageURL = await getDownloadURL(storageRef);
+        return uploadedImageURL;
+    };
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const userId = localStorage.getItem("userId");
+            if (userId) {
+                const userDocRef = doc(db, "users", userId);
+    
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const user = userDoc.data();
+                    setUserData(user);
+                    setImageURL(user.imageURL);
+                }
+            }
+        };
+    
+        fetchUserData();
+    }, []);
+    
+
 
     const openLink = (url: any) => {
         window.open(url, '_blank');
@@ -373,13 +391,28 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="absolute top-[1%] left-[3%]" width="286" height="612" viewBox="0 0 286 612" fill="none">
                                     <path d="M1 45.5C1 20.9233 20.9233 1 45.5 1H69.5C75.8513 1 81 6.14873 81 12.5C81 20.5081 87.4919 27 95.5 27H190.5C198.508 27 205 20.5081 205 12.5C205 6.14873 210.149 1 216.5 1H240.5C265.077 1 285 20.9233 285 45.5V566.5C285 591.077 265.077 611 240.5 611H45.5C20.9233 611 1 591.077 1 566.5V45.5Z" fill="white" stroke="#737373" />
                                 </svg>
-                                <div className='absolute top-[40%] cursor-pointer left-0 p-4 flex flex-col mx-auto w-full  gap-2 items-center justify-center'>
+                                {/* <div className='absolute top-[40%] cursor-pointer left-0 p-4 flex flex-col mx-auto w-full  gap-2 items-center justify-center'>
                                     {links.map((link, index) => (
-                                        link.image && (
-                                            <Image key={index} src={link.image} alt={link.platform} width={237} height={44} />
-                                        )
+                                        <Image key={index} src={link.image} alt={link.platform} width={237} height={44} onClick={() => openLink(link.url)} />
                                     ))}
+                                </div> */}
+                                <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar'>
+                                    <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full gap-2 items-center justify-center'>
+                                        {links.map((link, index) => (
+                                            link.image && (
+                                                <Image
+                                                    key={index}
+                                                    src={link.image}
+                                                    alt={link.platform}
+                                                    width={237}
+                                                    height={44}
+                                                    onClick={() => openLink(link.url)}
+                                                />
+                                            )
+                                        ))}
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     )
@@ -394,22 +427,30 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                     </svg>
                                     {userData && (
                                         <div className="absolute top-12 text-center flex flex-col mx-auto w-full items-center justify-center gap-[]">
-                                            <Image src={imageURL} alt="Profile" width={100} height={100} className="rounded-full " />
+                                            <Image src={imageURL} alt="Profile" width={100} height={100} className="rounded-full border-[4px] border-[#633CFF]  " />
                                             <h1 className="text-[18px] font-[600] text-gray-600">{`${userData.firstName} ${userData.lastName}`}</h1>
                                             {userData.email && (
                                                 <h2 className="text-[14px] font-[400] text-gray-200">{userData.email}</h2>
                                             )}
                                         </div>
                                     )}
-                                    <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar'>
-                                        <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full  gap-2 items-center justify-center'>
+                                    <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar '>
+                                        <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full gap-2 items-center justify-center'>
                                             {links.map((link, index) => (
                                                 link.image && (
-                                                    <Image key={index} src={link.image} alt={link.platform} width={237} height={44} />
+                                                    <Image
+                                                        key={index}
+                                                        src={link.image}
+                                                        alt={link.platform}
+                                                        width={237}
+                                                        height={44}
+                                                        onClick={() => openLink(link.url)}
+                                                    />
                                                 )
                                             ))}
                                         </div>
                                     </div>
+
 
                                 </div>
                             </div>
@@ -438,7 +479,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="flex flex-col justify-center items-center">
+                                            <div className="flex flex-col justify-center items-center rounded-[12px]">
                                                 <Image src={profilee} alt="" width={60} height={70} />
                                                 <h1 className="text-header-S-M font-[600] text-[#633CFF]">+ Upload Image</h1>
                                             </div>
@@ -601,3 +642,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
 };
 
 export default Customize;
+function commitBatch(batch: WriteBatch) {
+    throw new Error('Function not implemented.');
+}
+
