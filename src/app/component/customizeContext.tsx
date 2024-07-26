@@ -262,6 +262,9 @@ export const CustomizeProvider: React.FC<{ children: ReactNode }> = ({ children 
     
                 setSuccess("Links saved successfully.");
                 setError("");
+    
+                // Show success alert
+                alert("Links saved successfully.");
             } catch (error) {
                 console.error("Error saving links:", error);
                 setError("Error saving links. Please try again.");
@@ -321,7 +324,8 @@ export const CustomizeProvider: React.FC<{ children: ReactNode }> = ({ children 
             setSuccess("Profile saved successfully.");
     
             // Save links after saving the profile
-            handleSave1();
+            await handleSave1();
+            alert("Profile and links saved successfully.");
         } catch (error) {
             console.error("Error saving profile:", error);
             setError("Error saving profile. Please try again.");
@@ -329,6 +333,7 @@ export const CustomizeProvider: React.FC<{ children: ReactNode }> = ({ children 
             setUploading(false);
         }
     };
+    
     
 
     useEffect(() => {
