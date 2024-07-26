@@ -8,14 +8,16 @@ export const addUser = async (userData: { firstName: string; lastName: string; e
   return userRef.id; // Return the document ID
 };
 
+
 // Function to update a user
 export const updateUser = async (userId: string, updatedData: any) => {
   const userRef = doc(db, "users", userId); // Reference to the specific user document
   await updateDoc(userRef, updatedData); // Update the user data
 };
 
+
 // Function to upload image (stub - implement with actual storage logic)
-export const uploadImage = async (image: File, userId: string) => {
+export const uploadImage = async (image: File, userId: any) => {
   // Implement Firebase Storage upload logic here
   // For now, return a placeholder URL
   return "https://example.com/placeholder-image.jpg";

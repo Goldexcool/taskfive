@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import Image from 'next/image';
 import start from '../images/Group 273.svg';
 import github from '../images/github.svg';
@@ -44,339 +44,56 @@ import Header from "../component/header";
 import { collection, writeBatch, doc, getDoc, getDocs, setDoc, DocumentData, WriteBatch } from "firebase/firestore"; // import firestore
 import { db, storage } from "../../../Firebase/initFirebase"; // import firestore
 import { link } from 'fs';
+import { useCustomizeContext } from '../component/customizeContext';
 
-interface Link {
-    id: any;
-    platform: string;
-    url: string;
-    error?: string;
-    image?: any;
-}
 
-interface Platform {
-    id: number;
-    platName: string;
-    image: any;
-    placeholder?: string;
-    image01?: any | null;
-}
-
-interface PlatformImage {
-    id: number;
-    platName: string;
-    image: any;
-    url: string;
-}
-
+const CustomizeContext = createContext(null)
 interface CustomizeProps {
-    activeSection: "link" | "profile";
+    activeSection: 'link' | 'profile';
 }
 
 const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
-    const [showInitialPrompt, setShowInitialPrompt] = useState<boolean>(true);
-    const [links, setLinks] = useState<Link[]>([]);
-    const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const [selectedPlatform, setSelectedPlatform] = useState<string>('Github');
-    const [linkUrl, setLinkUrl] = useState<string>('');
-    const [platformImages, setPlatformImages] = useState<PlatformImage[]>([]);
-    const [selectedImages, setSelectedImages] = useState({});
-    const [firstName, setFirstName] = useState<string>("");
-    const [lastName, setLastName] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [image, setImage] = useState<File | null>(null);
-    const [imageURL, setImageURL] = useState<any | null>(profilee); // Initialize with default image
-    const [error, setError] = useState<string>("");
-    const [uploading, setUploading] = useState<boolean>(false);
-    const [userData, setUserData] = useState<any>(null);
-    const [selectedPlatformImage, setSelectedPlatformImage] = useState('');
-    const [success, setSuccess] = useState<string>('');
+    const {
+        showInitialPrompt,
+        links,
+        modalOpen,
+        selectedPlatform,
+        linkUrl,
+        selectedImages,
+        firstName,
+        setFirstName,
+        lastName,
+        setLastName,
+        email,
+        setEmail,
+        setLinks,
+        image,
+        imageURL,
+        error,
+        uploading,
+        userData,
+        selectedPlatformImage,
+        success,
+        modalCont,
+        handleAddNewLink,
+        handleRemoveLink,
+        handlePlatformChange,
+        handleImageClick,
+        handleUrlChange,
+        validateLink,
+        toggleModal,
+        handleSave1,
+        sendData,
+        handleImageChange,
+        openModalId,
+        setOpenModalId
+    } = useCustomizeContext();
 
-
-    const modalCont: Platform[] = [
-        { id: 1, platName: "Github", image: github, image01: githubImg, placeholder: "e.g. https://www.github.com/johnappleseed", },
-        { id: 2, platName: "Frontendmentor", image: frontedmentor, image01: frontendmentorImg, placeholder: "e.g. https://www.frontendmentor.io/profile/johnappleseed" },
-        { id: 3, platName: "Twitter", image: twitter, image01: twitterImg, placeholder: "e.g. https://twitter.com/johnappleseed" },
-        { id: 4, platName: "LinkedIn", image: linkedIn, image01: linkedinImg, placeholder: "e.g. https://www.linkedin.com/in/johnappleseed" },
-        { id: 5, platName: "Youtube", image: youtube, image01: youtubeImg, placeholder: "e.g. https://www.youtube.com/c/johnappleseed" },
-        { id: 6, platName: "Facebook", image: facebook, image01: facebookImg, placeholder: "e.g. https://www.facebook.com/johnappleseed" },
-        { id: 7, platName: "Twitch", image: twitch, image01: twitchImg, placeholder: "e.g. https://www.twitch.tv/johnappleseed" },
-        { id: 8, platName: "Dev.to", image: devto, image01: devtoImg, placeholder: "e.g. https://www.github.com/johnappleseed" },
-        { id: 9, platName: "CodeWars", image: codewars, image01: codewarsImg, placeholder: "e.g. https://www.codewars.com/johnappleseed" },
-        { id: 10, platName: "CodePen", image: codepen, image01: codepenImg, placeholder: "e.g. https://www.codepen.com/johnappleseed" },
-        { id: 11, platName: "FreeCodeCamp", image: freecodecamp, image01: freecodecampImg, placeholder: "e.g. https://www.freecodecamp.com/johnappleseed" },
-        { id: 12, platName: "GitLab", image: gitlab, image01: gitlabImg, placeholder: "e.g. https://www.gitlab.com/johnappleseed" },
-        { id: 13, platName: "Hashnode", image: hashnode, image01: hashnode, placeholder: "e.g. https://www.hashnode.com/johnappleseed" },
-        { id: 14, platName: "StackOverflow", image: stackoverflow, image01: stackoverflowImg, placeholder: "e.g. https://www.stackoverflow.com/johnappleseed" }
-    ];
-
-
-
-    const handleAddNewLink = (): void => {
-        setShowInitialPrompt(false);
-        setLinks([
-            ...links,
-            {
-                id: links.length + 1,
-                platform: 'Github',
-                url: '',
-                image: '', // Set image to null initially
-            }
-        ]);
-    };
-
-    const handleRemoveLink = (id: number): void => {
-        setLinks(links.filter(link => link.id !== id));
-        if (links.length === 1) setShowInitialPrompt(true);
-    };
-
-    const handlePlatformChange = (linkId: number, platformName: string) => {
-        const selectedPlatform = modalCont.find(item => item.platName === platformName);
-        const platformImage = selectedPlatform ? selectedPlatform.image01 : '';
-    
-        setLinks(links.map(link =>
-            link.id === linkId ? { ...link, platform: platformName, image: platformImage } : link
-        ));
-        setOpenModalId(null);
-    };
-    
-
-
-
-    const handleImageClick = (url: string): void => {
+    function openLink(url: string): void {
         if (url) {
             window.open(url, '_blank');
         }
-    };
-    const handleUrlChange = (id: any, url: any) => {
-        setLinks(links.map(link => link.id === id ? { ...link, url } : link));
-    };
-
-    const validateLink = (platform: string, url: string): string => {
-        const platformUrls: { [key: string]: string } = {
-            'Github': 'github.com/',
-            'GitLab': 'gitlab.com/',
-            'Frontendmentor': 'www.frontendmentor.io/',
-            'Twitter': 'x.com/',
-            'LinkedIn': 'linkedin.com/',
-            'Youtube': 'www.youtube.com/',
-            'Facebook': 'facebook.com/',
-            'Twitch': 'twitch.tv/',
-            'Dev.to': 'dev.to/',
-            'CodeWars': 'codewars.com/',
-            'CodePen': 'codepen.io/',
-            'FreeCodeCamp': 'freecodecamp.org/',
-            'Hashnode': 'hashnode.com/',
-            'StackOverflow': 'stackoverflow.com/'
-
-        };
-        const expectedUrl = platformUrls[platform] || '';
-        if (!url) {
-            return "Link can't be empty";
-        } else if (expectedUrl && !url.startsWith(`https://${expectedUrl}`)) {
-            // return `URL should start with https://${expectedUrl}`;
-            return "Please check the URL"
-        } else {
-            return '';
-        }
-    };
-    const [openModalId, setOpenModalId] = useState<number | null>(null);
-
-    const toggleModal = (id: number): void => {
-        setOpenModalId(openModalId === id ? null : id);
-    };
-
-    const handleSave1 = async (): Promise<void> => {
-        let hasError = false;
-    
-        // Validate links
-        const updatedLinks = links.map(link => {
-            const error = validateLink(link.platform, link.url);
-            if (error) hasError = true;
-            return { ...link, error };
-        });
-        setLinks(updatedLinks);
-    
-        // Proceed to save if there are no errors
-        if (!hasError) {
-            try {
-                const userId = localStorage.getItem("userId");
-                if (!userId) {
-                    throw new Error("User ID is not available.");
-                }
-    
-                console.log("Saving links for userId:", userId);
-    
-                // Save each link to the database
-                const batch = writeBatch(db); // Use a batch for performance
-                for (const link of updatedLinks) {
-                    const linkDocRef = doc(db, `users/${userId}/links`, link.id.toString());
-                    batch.set(linkDocRef, {
-                        url: link.url,
-                        platform: link.platform,
-                        image: link.image // Ensure the image is included
-                    });
-                }
-    
-                await commitBatch(batch);
-    
-                setSuccess("Links saved successfully.");
-                setError("");
-                console.log("Save successful", updatedLinks);
-    
-                // Clear link inputs after successful save
-                setLinks(updatedLinks.map(link => ({ ...link, url: '' })));
-    
-            } catch (error) {
-                console.error("Error saving links:", error);
-                setError("Error saving links. Please try again.");
-                setSuccess("");
-            }
-        } else {
-            setError("There are validation errors. Please fix them before saving.");
-            setSuccess("");
-        }
-    };
-    
-
-    const sendData = async () => {
-        if (!firstName || !lastName || !email) {
-            setError("First name, last name, and email are required.");
-            return;
-        }
-
-        try {
-            setUploading(true);
-
-            // Add user and get userId
-            const userId = await addUser({ firstName, lastName, email });
-
-            // Store userId in local storage
-            localStorage.setItem("userId", userId);
-
-            // Reference to the user document
-            const userDocRef = doc(db, "users", userId);
-
-            // Set user document
-            await setDoc(userDocRef, {
-                firstName,
-                lastName,
-                email,
-            });
-
-            let uploadedImageURL = profilee;
-
-            if (image) {
-                uploadedImageURL = await uploadImage(image, userId);
-                await updateUser(userId, { imageURL: uploadedImageURL });
-            }
-
-            setImageURL(uploadedImageURL); // Set the image URL after uploading
-
-            // Fetch user data
-            const user = await getUser(userId);
-            setUserData(user);
-
-            // Clear form
-            setFirstName("");
-            setLastName("");
-            setEmail("");
-            setImage(null);
-            setImageURL(profilee);
-            setError("");
-            setSuccess("Profile saved successfully.");
-
-            // Save links after saving the profile
-            handleSave1();
-        } catch (error) {
-            console.error("Error saving profile:", error);
-            setError("Error saving profile. Please try again.");
-        } finally {
-            setUploading(false);
-        }
-    };
-
-
-    useEffect(() => {
-        const fetchLinks = async () => {
-            try {
-                const userId = localStorage.getItem("userId");
-                if (!userId) {
-                    throw new Error("User ID is not available.");
-                }
-    
-                const linksCollectionRef = collection(db, `users/${userId}/links`);
-                const linkDocs = await getDocs(linksCollectionRef);
-    
-                const fetchedLinks: Link[] = [];
-                linkDocs.forEach(doc => {
-                    const data = doc.data() as DocumentData;
-                    fetchedLinks.push({
-                        id: doc.id, // Ensure you use doc.id for the link ID
-                        url: data.url,
-                        platform: data.platform,
-                        image: data.image // Ensure you include the image URL
-                    });
-                });
-    
-                setLinks(fetchedLinks);
-            } catch (error) {
-                console.error("Error fetching links:", error);
-            }
-        };
-    
-        fetchLinks();
-    }, []);
-    
-
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const selectedImage = e.target.files[0];
-            if (
-                selectedImage.size <= 1024 * 1024 &&
-                (selectedImage.type === "image/png" || selectedImage.type === "image/jpeg")
-            ) {
-                setImage(selectedImage);
-                setError("");
-                const reader = new FileReader();
-                reader.onloadend = () => setImageURL(reader.result as string);
-                reader.readAsDataURL(selectedImage);
-            } else {
-                setError("Image must be below 1024x1024px and in PNG or JPG format.");
-            }
-        }
-    };
-
-    const uploadImage = async (image: any, userId: any) => {
-        const storageRef = ref(storage, `user-images/${userId}`);
-        await uploadBytes(storageRef, image);
-        const uploadedImageURL = await getDownloadURL(storageRef);
-        return uploadedImageURL;
-    };
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const userId = localStorage.getItem("userId");
-            if (userId) {
-                const userDocRef = doc(db, "users", userId);
-    
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    const user = userDoc.data();
-                    setUserData(user);
-                    setImageURL(user.imageURL);
-                }
-            }
-        };
-    
-        fetchUserData();
-    }, []);
-    
-
-
-    const openLink = (url: any) => {
-        window.open(url, '_blank');
-    };
+    }
 
     return (
         <section className='pt-0 pr-6 pb-6 pl-6'>
@@ -484,8 +201,10 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                                 <h1 className="text-header-S-M font-[600] text-[#633CFF]">+ Upload Image</h1>
                                             </div>
                                         )}
+                                        {/* {onClick && <button onClick={onClick}>Change image</button>} */}
                                         <input id="file-upload" type="file" accept="image/png, image/jpeg" onChange={handleImageChange} className="hidden" />
                                     </label>
+
                                     <h2 className="text-[13px] text-gray-200 font-[400] w-[40%]">
                                         {error || "Image must be below 1024x1024px. Use PNG or JPG format."}
                                     </h2>
