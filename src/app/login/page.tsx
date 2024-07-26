@@ -77,7 +77,7 @@ const Login = () => {
 
   return (
     <section className='w-full h-[100vh] flex justify-center items-center bg-gray-100 '>
-      <div className='flex flex-col justify-center items-center gap-8'>
+      <div className='flex flex-col justify-center items-center gap-8 mt-[1rem] md:mt-[0.1rem]'>
         <Image src={logo} alt='applogo' width={150} height={100} />
         <div className='flex flex-col gap-4 p-[40px] bg-white rounded-md'>
           <div className='flex flex-col gap-2'>

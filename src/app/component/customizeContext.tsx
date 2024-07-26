@@ -140,17 +140,22 @@ export const CustomizeProvider: React.FC<{ children: ReactNode }> = ({ children 
     ];
 
     const handleAddNewLink = (): void => {
-        setShowInitialPrompt(false);
-        setLinks([
-            ...links,
-            {
-                id: links.length + 1,
-                platform: 'Github',
-                url: '',
-                image: '', 
-            }
-        ]);
+        if (links.length < 5) {
+            setShowInitialPrompt(false);
+            setLinks([
+                ...links,
+                {
+                    id: links.length + 1,
+                    platform: 'Github',
+                    url: '',
+                    image: '', 
+                }
+            ]);
+        } else {
+            alert("You can only add up to 5 links.");
+        }
     };
+    
 
     const handleRemoveLink = async (id: number): Promise<void> => {
         setLinks(prevLinks => {

@@ -96,12 +96,12 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
     }
 
     return (
-        <section className='pt-0 pr-6 pb-6 pl-6'>
-            <div className='grid md:grid-cols-2 gap-3'>
-                <div className='p-[15px] '>
+        <section className='pt-0 md:pr-6 md:pb-6 md:pl-6 pr-3 pb-3 pl-3'>
+            <div className='grid lg:grid-cols-2 gap-3'>
+                <div className='p-[15px] hidden lg:inline-flex w-full'>
                     {activeSection === "link" ? (
-                        <div className='bg-white p-[4rem] rounded-md flex  justify-center min-h-[700px] items-center '>
-                            <div className='relative'>
+                        <div className='bg-white p-[4rem] rounded-md flex justify-center min-h-[700px] items-center w-full'>
+                            <div className='relative '>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" viewBox="0 0 308 632" fill="none">
                                     <path d="M1 54.5C1 24.9528 24.9528 1 54.5 1H253.5C283.047 1 307 24.9528 307 54.5V577.5C307 607.047 283.047 631 253.5 631H54.5C24.9528 631 1 607.047 1 577.5V54.5Z" stroke="#737373" />
                                 </svg>
@@ -113,28 +113,28 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                         <Image key={index} src={link.image} alt={link.platform} width={237} height={44} onClick={() => openLink(link.url)} />
                                     ))}
                                 </div> */}
-                                <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar'>
-                                    <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full gap-2 items-center justify-center'>
-                                        {links.map((link, index) => (
-                                            link.image && (
-                                                <Image
-                                                    key={index}
-                                                    src={link.image}
-                                                    alt={link.platform}
-                                                    width={237}
-                                                    height={44}
-                                                    onClick={() => openLink(link.url)}
-                                                />
-                                            )
-                                        ))}
+                                <div className='overflow-y-auto cursor-pointer max-h-[200px] hide-scrollbar '>
+                                        <div className='absolute top-[30%] p-4 flex flex-col mx-auto gap-2 w-full items-center justify-center'>
+                                            {links.map((link, index) => (
+                                                link.image && (
+                                                    <Image
+                                                        key={index}
+                                                        src={link.image}
+                                                        alt={link.platform}
+                                                        width={237}
+                                                        height={44}
+                                                        onClick={() => openLink(link.url)}
+                                                    />
+                                                )
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
                             </div>
                         </div>
                     )
                         : (
-                            <div className="bg-white p-[4rem] rounded-md flex justify-center min-h-[700px] items-center">
+                            <div className="bg-white p-[4rem] rounded-md flex justify-center min-h-[700px] w-full items-center">
                                 <div className="relative">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="308" height="632" viewBox="0 0 308 632" fill="none">
                                         <path d="M1 54.5C1 24.9528 24.9528 1 54.5 1H253.5C283.047 1 307 24.9528 307 54.5V577.5C307 607.047 283.047 631 253.5 631H54.5C24.9528 631 1 607.047 1 577.5V54.5Z" stroke="#737373" />
@@ -152,7 +152,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                         </div>
                                     )}
                                     <div className='overflow-y-auto cursor-pointer max-h-[300px] hide-scrollbar '>
-                                        <div className='absolute top-[40%] left-0 p-4 flex flex-col mx-auto w-full gap-2 items-center justify-center'>
+                                        <div className='absolute top-[35%] left-0 p-4 flex flex-col mx-auto w-full gap-2 items-center justify-center'>
                                             {links.map((link, index) => (
                                                 link.image && (
                                                     <Image
@@ -173,16 +173,16 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                             </div>
                         )}
                 </div>
-                <div className='p-[15px] bg-white-- md:w-full'>
+                <div className='md:p-[15px] p-[7px] bg-white-- md:w-full '>
                     {activeSection === "profile" ? (
-                        <div className="bg-white p-[40px] rounded-md flex flex-col min-h-full justify-between w-full">
+                        <div className="bg-white md:p-[40px] p-[15px] rounded-md flex flex-col min-h-full justify-between w-full">
                             <h1 className="text-header-M font-[700] text-gray-600">Profile Details</h1>
                             <h2 className="text-[14px] font-[400] text-gray-200">
                                 Add your details to create a personal touch to your profile.
                             </h2>
-                            <div className="flex justify-between w-full items-center p-[2rem] bg-white-- rounded-[12px]">
+                            <div className="flex md:flex-row flex-col justify-between w-full md:gap-0 mt-[0.5rem] md:mt-[0rem] gap-2  md:items-center items-start md:p-[2rem]  bg-white-- rounded-[12px]">
                                 <h2 className="text-header-S-M text-gray-200 font-[400]">Profile picture</h2>
-                                <div className="relative flex justify-center items-center gap-[1rem]">
+                                <div className="relative flex md:items-center gap-[1rem] md:flex-row flex-col items-start just-fy-s">
                                     <label
                                         htmlFor="file-upload"
                                         className={`relative ${imageURL === profilee ? "pt-[50px] pr-[30px] pb-[45px] pl-[30px] rounded-[12px]" : ""} bg-purple-50 hover:flex flex-col items-center cursor-pointer`}
@@ -192,7 +192,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                                 <Image src={imageURL} alt="Profile" width={200} height={200} className="object-cover rounded-md " />
                                                 <div className="absolute inset-0 flex items-center justify-center flex-col bg-black bg-opacity-30 rounded-md">
                                                     <Image src={profileee} alt="" width={60} height={70} />
-                                                    <h1 className="text-header-S-M font-[600] text-white">Change image</h1>
+                                                    <h1 className="lg:text-header-S-M text-[12px] font-[600] text-white">Change image</h1>
                                                 </div>
                                             </div>
                                         ) : (
@@ -210,9 +210,9 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                     </h2>
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-4 mt-[0.7rem] bg-white-- rounded-[12px] p-[1.5rem]">
+                            <div className="flex flex-col gap-4 mt-[0.7rem] bg-white-- rounded-[12px] md:p-[1.5rem] p-[0.5rem]">
                                 <form className="flex flex-col gap-4 mt-[0.7rem]">
-                                    <div className="flex justify-between w-full items-center">
+                                    <div className="flex justify-between w-full md:items-center flex-col md:flex-row gap-2 items-start">
                                         <label className="text-header-S-M text-gray-200 w-[240px]">First name*</label>
                                         <input
                                             value={firstName}
@@ -221,7 +221,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                             className="px-[16px] py-[12px] w-full rounded-[8px] border-[1.3px] border-[#D9D9D9] bg-white placeholder:text-header-S-M font-[400]"
                                         />
                                     </div>
-                                    <div className="flex justify-between w-full items-center">
+                                    <div className="flex justify-between w-full  md:items-center flex-col md:flex-row gap-2 items-start">
                                         <label className="text-header-S-M text-gray-200 w-[240px]">Last name*</label>
                                         <input
                                             value={lastName}
@@ -230,7 +230,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                             className="px-[16px] py-[12px] w-full rounded-[8px] border-[1.3px] border-[#D9D9D9] bg-white placeholder:text-header-S-M font-[400]"
                                         />
                                     </div>
-                                    <div className="flex justify-between w-full items-center">
+                                    <div className="flex justify-between w-full md:items-center flex-col md:flex-row gap-2 items-start">
                                         <label className="text-header-S-M text-gray-200 w-[240px]">Email</label>
                                         <input
                                             value={email}
@@ -254,7 +254,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                         </div>
                     )
                         : (
-                            <div className='flex flex-col gap-2 bg-white p-[20px] w-auto min-h-full justify-between '>
+                            <div className='flex flex-col gap-2 bg-white md:p-[20px] p-[10px] w-auto min-h-full justify-between '>
                                 <div>
                                     <div className='flex flex-col gap-2'>
                                         <h1 className='text-[#3D3B48] text-header-M font-bold'>Customize your links</h1>
@@ -279,7 +279,7 @@ const Customize: React.FC<CustomizeProps> = ({ activeSection }) => {
                                             {links.map((link, index) => {
                                                 const placeholder = modalCont.find(item => item.platName === link.platform)?.placeholder || '';
                                                 return (
-                                                    <div key={link.id} className='mt-[1rem] bg-white-- p-[20px] rounded-sm overflow-auto hide-scrollbar'>
+                                                    <div key={link.id} className='mt-[1rem] bg-white--  md:p-[20px] p-[10px] rounded-sm overflow-auto hide-scrollbar'>
                                                         <div className='flex w-full justify-between items-center'>
                                                             <h1 className='text-header-S-M font-[700] text-gray-200'><span className='font-[400] text-header-S-M'>=</span> Link #{index + 1}</h1>
                                                             <button className='text-header-S-M font-[400] text-gray-200' onClick={() => handleRemoveLink(link.id)}>Remove</button>

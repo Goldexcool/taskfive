@@ -28,7 +28,7 @@ const Preview = () => {
 
     const handleShareLink = async (): Promise<void> => {
         try {
-            // Generate a unique link (e.g., using a user ID or token)
+          
             const userId = localStorage.getItem("userId");
             if (!userId) throw new Error("User ID is not available.");
 
@@ -54,17 +54,17 @@ const Preview = () => {
     return (
         <section className='flex justify-center h-screen'>
             <div className='flex flex-col w-full'>
-                <div className='bg-blue h-[45%] relative p-[0.7rem] rounded-[0px_0px_32px_32px] '>
+                <div className='md:bg-blue bg-white h-[45%] relative p-[0.7rem] rounded-[0px_0px_32px_32px] '>
                     <div className='flex justify-between w-full pt-[16px] rounded-xl pr-[16px] pb-[16px] pl-[24px] bg-white p-[1rem] mt-[1rem]'>
                         <button
                             onClick={handleBackToEditor}
-                            className='text-header-S-M font-bold rounded-md px-[27px] py-[11px] border-[1.2px] border-blue text-blue'
+                            className='md:text-header-S-M text-[12px] font-bold rounded-md md:px-[27px] md:py-[11px] px-[20px] py-[9px]  border-[1.2px] border-blue text-blue'
                         >
                             Back to Editor
                         </button>
                         <button
                             onClick={handleShareLink}
-                            className='px-[27px] py-[11px] bg-blue rounded-md text-white text-header-S-M'
+                            className='md:px-[27px] md:py-[11px] px-[20px] py-[9px] bg-blue rounded-md text-white md:text-header-S-M text-[12px]'
                         >
                             Share Link
                         </button>
